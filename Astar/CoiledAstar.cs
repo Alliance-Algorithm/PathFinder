@@ -8,6 +8,9 @@ namespace AllianceDM.Nav
     {
         Transform2D gameobjec;
         Transform2D target;
+        MapMsg map;
+
+        PriorityQueue<Node3, float> Openlist;
 
         Vector2 forward = new();
 
@@ -16,11 +19,14 @@ namespace AllianceDM.Nav
             Console.WriteLine(string.Format("AllianceDM.Nav CoiledAstar : uuid:{0:D4}", uuid));
             gameobjec = new(0, [], []);
             target = new(0, [], []);
+            map = new(0, [], []);
+            Openlist = new PriorityQueue<Node3, float>();
         }
         public override void Awake()
         {
             gameobjec = DecisionMaker.FindComponent(RecieveID[0]) as Transform2D ?? throw new Exception();
             target = DecisionMaker.FindComponent(RecieveID[1]) as Transform2D ?? throw new Exception();
+            map = DecisionMaker.FindComponent(RecieveID[2]) as MapMsg ?? throw new Exception();
         }
         public override void Update()
         {
@@ -48,5 +54,51 @@ namespace AllianceDM.Nav
         }
 
         public Vector2 Output => forward;
+    }
+
+    class Node3(float x, float y, float t, Node3? f)
+    {
+        const int headings = 72;
+        const float rotateAngle = MathF.PI / 3;
+        const float halfRotateAngle = rotateAngle / 2;
+        const float stepLength = 0.1f;
+        readonly float _x = x;
+        readonly float _y = y;
+        readonly float _t = t;
+        readonly Node3? _father = f;
+
+        List<Node3> Successor
+        {
+            get
+            {
+                List<Node3> node3s = [];
+                for (float i = 0; i < headings; i++)
+                {
+                    float angle = i * rotateAngle / headings - halfRotateAngle;
+                    (float Sin, float Cos) x = MathF.SinCos(angle);
+                    var vec2 = stepLength * new Vector2(x.Sin, x.Cos);
+                    node3s.Add(new Node3(_x + vec2.X, _y + vec2.Y, _t + angle, this));
+                }
+                return node3s;
+            }
+        }
+
+        List<Node3> InitCollection
+        {
+
+            get
+            {
+                int headings = Node3.headings * (int)MathF.Round(rotateAngle / MathF.Tau);
+                List<Node3> node3s = [];
+                for (float i = 0; i < headings; i++)
+                {
+                    float angle = i * MathF.Tau / headings - MathF.PI;
+                    (float Sin, float Cos) x = MathF.SinCos(angle);
+                    var vec2 = stepLength * new Vector2(x.Sin, x.Cos);
+                    node3s.Add(new Node3(_x + vec2.X, _y + vec2.Y, _t + angle, this));
+                }
+                return node3s;
+            }
+        }
     }
 }
