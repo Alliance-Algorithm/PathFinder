@@ -2,7 +2,9 @@ namespace AllianceDM.Nav
 {
     public class MapMsg(uint uuid, uint[] revid, string[] args) : Component(uuid, revid, args)
     {
-        protected byte[,] _map = new byte[0, 0];
-        public byte[,] Map => _map;
+        protected sbyte[,] _map = new sbyte[0, 0];
+        public sbyte[,] Map => _map;
+        protected float _resolution;
+        public float Resolution => _resolution;
     }
 }

@@ -9,8 +9,9 @@ namespace AllianceDM.Nav
         {
             IOManager.RegistryMassage(Args[0], (OccupancyGrid msg) =>
             {
-                _map = new byte[msg.Info.Height, msg.Info.Width];
+                _map = new sbyte[msg.Info.Height, msg.Info.Width];
                 Buffer.BlockCopy(msg.Data, 0, _map, 0, msg.Data.Length);
+                _resolution = msg.Info.Resolution;
             });
         }
     }
