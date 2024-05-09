@@ -31,7 +31,8 @@ namespace AllianceDM.Nav
         {
             var vec = global.Output - sentry.Output.pos;
             vec = new(vec.X, vec.Y);
-            vec = (Math.Clamp(vec.Length() / MaxSpeedDistance, 0, 1) * (SpeedMax - SpeedMin) + SpeedMin) / vec.Length() * local.Output;
+            if (vec.Length() != 0)
+                vec = (Math.Clamp(vec.Length() / MaxSpeedDistance, 0, 1) * (SpeedMax - SpeedMin) + SpeedMin) / vec.Length() * local.Output;
             Speed = vec;
         }
         public override void Echo(string topic, int frameRate)

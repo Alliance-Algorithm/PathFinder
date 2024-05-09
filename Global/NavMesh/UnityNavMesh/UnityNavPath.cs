@@ -10,7 +10,7 @@ using Rosidl.Messages.Geometry;
 namespace AllianceDM.Nav
 {
 #pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
-    public class UnityNav(uint uuid, uint[] revid, string[] args) : GlobalPathFinder(uuid, revid, args)
+    public class UnityNavPath(uint uuid, uint[] revid, string[] args) : GlobalPathFinder(uuid, revid, args)
 #pragma warning restore CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
     {
         Transform2D SentryPosition;
@@ -42,7 +42,21 @@ namespace AllianceDM.Nav
                 }
             });
 
-            IOManager.RegistryMassage(Args[1], (Pose2D msg) => { DestPos.X = (float)msg.X; DestPos.Y = (float)msg.Y; });
+            IOManager.RegistryMassage(Args[1], (Rosidl.Messages.Nav.Path msg) =>
+            {
+                DestPos.X = DestinationPosition.Output.pos.X;
+                DestPos.Y = DestinationPosition.Output.pos.Y;
+                for (int i = 0, k = msg.Poses.Length; i < k; i++)
+                {
+                    Vector2 p = new((float)msg.Poses[i].Pose.Position.X, (float)msg.Poses[i].Pose.Position.Y);
+                    if ((SentryPosition.Output.pos - p).Length() < 0.9f)
+                        continue;
+                    DestPos.X = (float)msg.Poses[1].Pose.Position.X;
+                    DestPos.Y = (float)msg.Poses[1].Pose.Position.Y;
+                    break;
+                }
+
+            });
 
         }
         public override void Update()

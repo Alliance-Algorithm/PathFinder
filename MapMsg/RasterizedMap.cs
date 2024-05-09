@@ -1,6 +1,7 @@
 using AllianceDM.IO;
 using Rosidl.Messages.Nav;
 
+// args[0] = map topic
 namespace AllianceDM.Nav
 {
     public class RasterizedMap(uint uuid, uint[] recvid, string[] args) : MapMsg(uuid, recvid, args)
