@@ -42,6 +42,11 @@ namespace AllianceDM.Nav
             maxValue = 0;
             model.Output.Current.Length();
             Dir = Vector2.Zero;
+            if (nav.Output.X == 0 && nav.Output.Y == 0)
+            {
+                Dir = new(0, 0);
+                return;
+            }
             if (model.Output.Sample == null)
                 return;
             if (obstacle.Resolution == 0)
@@ -67,9 +72,12 @@ namespace AllianceDM.Nav
                 angle = angle / predict.Length() / model.Output.Current.Length();
             }
 
+            float angle2 = Vector2.Dot(predict, nav.Output - sentry.Output.pos);
+            angle2 = angle2 / predict.Length() / (nav.Output - sentry.Output.pos).Length();
+
             Vector2 pos = (model.Output.Current + predict) * 0.5f * model.Output.timeResolution;
+            float dis = 100 - (nav.Output - pos - sentry.Output.pos).Length();
             pos = pos / obstacle.Resolution + obstacle.Map.GetLength(1) / 2 * Vector2.One;
-            float dis = 100 - (nav.Output - predict - sentry.Output.pos).Length();
             return dis + (1 - angle) * headingCoef + obstacle.Map[(int)pos.X, (int)pos.Y] * obstacleCoef + predict.Length() * velocityCoef;
         }
     }

@@ -44,15 +44,14 @@ namespace AllianceDM.Nav
 
             IOManager.RegistryMassage(Args[1], (Rosidl.Messages.Nav.Path msg) =>
             {
-                DestPos.X = DestinationPosition.Output.pos.X;
-                DestPos.Y = DestinationPosition.Output.pos.Y;
+                DestPos.X = 0;
+                DestPos.Y = 0;
                 for (int i = 0, k = msg.Poses.Length; i < k; i++)
                 {
                     Vector2 p = new((float)msg.Poses[i].Pose.Position.X, (float)msg.Poses[i].Pose.Position.Y);
-                    if ((SentryPosition.Output.pos - p).Length() < 0.9f)
+                    if ((SentryPosition.Output.pos - p).Length() < 0.5f)
                         continue;
-                    DestPos.X = (float)msg.Poses[1].Pose.Position.X;
-                    DestPos.Y = (float)msg.Poses[1].Pose.Position.Y;
+                    DestPos = p;
                     break;
                 }
 
