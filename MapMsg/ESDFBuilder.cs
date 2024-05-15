@@ -1,5 +1,6 @@
 using AllianceDM.IO;
 using Rosidl.Messages.Nav;
+using Rosidl.Messages.Std;
 
 // args[0] = map topic
 // args[1] = BoxSize
@@ -8,7 +9,7 @@ namespace AllianceDM.Nav
 {
     public class ESDFBuilder(uint uuid, uint[] recvid, string[] args) : MapMsg(uuid, recvid, args)
     {
-        float boxSize_;
+        float boxSize;
         float ESDF_MaxDistance;
         const float SQRT2 = 1.414213562f;
         public override void Awake()
@@ -21,8 +22,27 @@ namespace AllianceDM.Nav
                 _resolution = msg.Info.Resolution;
             });
 
-            boxSize_ = float.Parse(Args[1]);
+            boxSize = float.Parse(Args[1]);
             ESDF_MaxDistance = float.Parse(Args[2]);
+            Task.Run(async () =>
+            {
+                using var pub = Ros2Def.node.CreatePublisher<OccupancyGrid>("/map_test");
+                using var nativeMsg = pub.CreateBuffer();
+                using var timer = Ros2Def.context.CreateTimer(Ros2Def.node.Clock, TimeSpan.FromMilliseconds(value: 1000 / 1));
+                while (true)
+                {
+                    var temp_map = new sbyte[Map.Length];
+                    Header header = new Header() { FrameId = "unity" };
+                    Buffer.BlockCopy(Map, 0, temp_map, 0, temp_map.Length);
+                    nativeMsg.AsRef<OccupancyGrid.Priv>().Data.CopyFrom(temp_map);
+                    nativeMsg.AsRef<OccupancyGrid.Priv>().Info.Height = (uint)Map.GetLength(0);
+                    nativeMsg.AsRef<OccupancyGrid.Priv>().Info.Width = (uint)Map.GetLength(1);
+                    nativeMsg.AsRef<OccupancyGrid.Priv>().Info.Resolution = Resolution;
+                    nativeMsg.AsRef<OccupancyGrid.Priv>().Header = new Header.Priv() { FrameId = new Rosidl.Runtime.Interop.CString(new ReadOnlySpan<sbyte>([(sbyte)'u', (sbyte)'n', (sbyte)'i', (sbyte)'t', (sbyte)'y'])) };
+                    pub.Publish(nativeMsg);
+                    await timer.WaitOneAsync(false);
+                }
+            });
         }
 
         public override void Update()
@@ -35,7 +55,19 @@ namespace AllianceDM.Nav
             if (_map.Length == 0)
                 return;
             Queue<(int x, int y)> queue = new();
+            float boxSize_ = boxSize * Resolution;
 
+            for (int x = 0; x < boxSize; x += 1)
+            {
+                for (int y = 0; y < boxSize; y += 1)
+                {
+                    if (map[x, y] == 0)
+                        map[x, y] = 0;
+                    else
+                        map[x, y] = 100;
+
+                }
+            }
             for (float x = Resolution; x < boxSize_; x += Resolution)
             {
                 for (float y = Resolution; y < boxSize_; y += Resolution)
@@ -89,6 +121,7 @@ namespace AllianceDM.Nav
 
             while (queue.Count > 0)
             {
+
                 (int x, int y) pos = queue.Dequeue();
                 if (map[pos.x, pos.y] != 100)
                 {
